@@ -9,10 +9,7 @@ using System.Threading.Tasks;
 
 namespace Mentorax.Api.Repositories.Implementations
 {
-    /// <summary>
-    /// Implementação do repositório de questionários
-    /// seguindo o mesmo padrão dos demais repositórios.
-    /// </summary>
+
     public class QuestionarioRepository : IQuestionarioRepository
     {
         private readonly ApplicationDbContext _context;
@@ -24,9 +21,6 @@ namespace Mentorax.Api.Repositories.Implementations
             _dbSet = _context.Set<Questionario>();
         }
 
-        // ----------------------------------------------------------------------
-        // CRUD básico herdado do padrão IRepository
-        // ----------------------------------------------------------------------
 
         public async Task AddAsync(Questionario entity)
         {
@@ -56,18 +50,18 @@ namespace Mentorax.Api.Repositories.Implementations
                 .FirstOrDefaultAsync(q => q.Id == id);
         }
 
+        public async Task<IEnumerable<Questionario>> GetAllAsync()
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task<long> CountAsync()
         {
             return await _dbSet.LongCountAsync();
         }
 
-        // ----------------------------------------------------------------------
-        // Implementações específicas da interface IQuestionarioRepository
-        // ----------------------------------------------------------------------
-
-        /// <summary>
-        /// Obtém todos os questionários de um mentorado específico.
-        /// </summary>
         public async Task<IEnumerable<Questionario>> GetByMenteeIdAsync(Guid mentoradoId)
         {
             return await _dbSet
@@ -77,9 +71,7 @@ namespace Mentorax.Api.Repositories.Implementations
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Verifica se já existe um questionário enviado para o mentorado.
-        /// </summary>
+
         public async Task<bool> ExistsForMenteeAsync(Guid mentoradoId)
         {
             return await _dbSet
@@ -87,9 +79,7 @@ namespace Mentorax.Api.Repositories.Implementations
                 .AnyAsync(q => q.MenteeId == mentoradoId);
         }
 
-        /// <summary>
-        /// Paginação geral.
-        /// </summary>
+
         public async Task<(IEnumerable<Questionario> Items, long TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
         {
             var query = _dbSet.AsQueryable();
@@ -106,9 +96,7 @@ namespace Mentorax.Api.Repositories.Implementations
             return (items, totalCount);
         }
 
-        /// <summary>
-        /// Paginação filtrada por ID de mentorado.
-        /// </summary>
+
         public async Task<(IEnumerable<Questionario> Items, long TotalCount)> GetPagedByMenteeIdAsync(Guid mentoradoId, int pageNumber, int pageSize)
         {
             var query = _dbSet

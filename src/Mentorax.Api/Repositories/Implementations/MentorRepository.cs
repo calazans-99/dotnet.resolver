@@ -42,9 +42,6 @@ namespace Mentorax.Api.Repositories.Implementations
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
 
-        /// <summary>
-        /// Implementação compatível com a interface IMentorRepository
-        /// </summary>
         public async Task<(IEnumerable<Mentor> Items, long TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
         {
             var query = _dbSet.AsQueryable();
@@ -71,9 +68,6 @@ namespace Mentorax.Api.Repositories.Implementations
             await _db.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Verifica se já existe um mentor com o e-mail informado.
-        /// </summary>
         public async Task<bool> EmailExistsAsync(string email, Guid? excludeId = null)
         {
             return await _dbSet.AnyAsync(m =>
@@ -82,9 +76,6 @@ namespace Mentorax.Api.Repositories.Implementations
             );
         }
 
-        /// <summary>
-        /// Obtém mentor pelo e-mail.
-        /// </summary>
         public async Task<Mentor?> GetByEmailAsync(string email)
         {
             return await _dbSet
@@ -92,9 +83,12 @@ namespace Mentorax.Api.Repositories.Implementations
                 .FirstOrDefaultAsync(m => m.Email == email);
         }
 
-        public Task<IEnumerable<Mentor>> GetAllAsync()
+        public async Task<IEnumerable<Mentor>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _dbSet
+                .AsNoTracking()
+                .ToListAsync();
         }
+
     }
 }

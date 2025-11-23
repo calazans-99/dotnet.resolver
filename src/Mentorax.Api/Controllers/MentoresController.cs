@@ -6,9 +6,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Mentorax.Api.Controllers
 {
-    /// <summary>
-    /// Controller para gerenciamento de mentores.
-    /// </summary>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
@@ -29,46 +26,14 @@ namespace Mentorax.Api.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Lista todos os mentores com paginação.
-        /// </summary>
-        /// <param name="page">Número da página (>= 1)</param>
-        /// <param name="pageSize">Tamanho da página (1-100)</param>
-        /// <returns>Lista paginada de mentores.</returns>
         [HttpGet]
-        [ProducesResponseType(typeof(Resource<object>), 200)]
-        [ProducesResponseType(400)]
-        public async Task<IActionResult> ObterTodos(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> ObterTodos()
         {
             try
             {
-                if (page < 1 || pageSize < 1 || pageSize > 100)
-                    return BadRequest("page deve ser >= 1 e pageSize deve estar entre 1 e 100");
-
-                var paged = await _repo.GetAllAsync(page, pageSize);
-
-                var dtos = _mapper.Map<IEnumerable<MentorDto>>(paged.Items);
-
-                var resource = new Resource<object>(new
-                {
-                    Items = dtos,
-                    paged.Page,
-                    paged.PageSize,
-                    paged.TotalCount
-                });
-
-                var self = Url.Action(nameof(ObterTodos), new { page, pageSize });
-                resource.Links.Add(new Link(self, "self", "GET"));
-
-                if (paged.Page < paged.TotalPages)
-                {
-                    var next = Url.Action(nameof(ObterTodos), new { page = paged.Page + 1, pageSize });
-                    resource.Links.Add(new Link(next, "next", "GET"));
-                }
-
-                return Ok(resource);
+                var entities = await _repo.GetAllAsync();
+                var dtos = _mapper.Map<IEnumerable<MentorDto>>(entities);
+                return Ok(dtos);
             }
             catch (Exception ex)
             {
@@ -77,14 +42,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtém um mentor pelo ID.
-        /// </summary>
-        /// <param name="id">ID do mentor.</param>
-        /// <returns>Mentor encontrado.</returns>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(Resource<MentorDto>), 200)]
-        [ProducesResponseType(404)]
         public async Task<IActionResult> ObterPorId(Guid id)
         {
             try
@@ -94,11 +52,7 @@ namespace Mentorax.Api.Controllers
                     return NotFound($"Mentor com ID {id} não encontrado");
 
                 var dto = _mapper.Map<MentorDto>(entity);
-
-                var resource = new Resource<MentorDto>(dto);
-                resource.Links.Add(new Link(Url.Action(nameof(ObterPorId), new { id }), "self", "GET"));
-
-                return Ok(resource);
+                return Ok(dto);
             }
             catch (Exception ex)
             {
@@ -107,14 +61,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Cria um novo mentor.
-        /// </summary>
-        /// <param name="model">Dados do mentor.</param>
-        /// <returns>Mentor criado.</returns>
         [HttpPost]
-        [ProducesResponseType(typeof(MentorDto), 201)]
-        [ProducesResponseType(400)]
         public async Task<IActionResult> Criar([FromBody] MentorDto model)
         {
             try
@@ -123,15 +70,11 @@ namespace Mentorax.Api.Controllers
                     return BadRequest(ModelState);
 
                 var entity = _mapper.Map<Mentorax.Api.Models.Mentor>(model);
-
                 await _repo.AddAsync(entity);
 
                 var dto = _mapper.Map<MentorDto>(entity);
 
-                return CreatedAtAction(nameof(ObterPorId), new
-                {
-                    id = entity.Id
-                }, dto);
+                return CreatedAtAction(nameof(ObterPorId), new { id = entity.Id }, dto);
             }
             catch (Exception ex)
             {
@@ -140,16 +83,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Atualiza um mentor existente.
-        /// </summary>
-        /// <param name="id">ID do mentor.</param>
-        /// <param name="model">Dados atualizados.</param>
-        /// <returns>Mentor atualizado.</returns>
         [HttpPut("{id}")]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
         public async Task<IActionResult> Atualizar(Guid id, [FromBody] MentorDto model)
         {
             try
@@ -175,14 +109,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Exclui um mentor.
-        /// </summary>
-        /// <param name="id">ID do mentor.</param>
-        /// <returns>Resultado da operação.</returns>
         [HttpDelete("{id}")]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(404)]
         public async Task<IActionResult> Excluir(Guid id)
         {
             try

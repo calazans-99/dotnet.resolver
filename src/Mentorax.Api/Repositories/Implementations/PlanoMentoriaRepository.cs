@@ -1,11 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Mentorax.Api.Data;
 using Mentorax.Api.Models;
 using Mentorax.Api.Repositories.Interfaces;
-using System.Collections.Generic;
-using System;
 
 namespace Mentorax.Api.Repositories.Implementations
 {
@@ -17,7 +17,25 @@ namespace Mentorax.Api.Repositories.Implementations
         public PlanoMentoriaRepository(ApplicationDbContext context)
         {
             _context = context;
-            _dbSet = _context.Set<PlanoMentoria>();
+            _dbSet = context.Set<PlanoMentoria>();
+        }
+
+        // ----------------------------------------------------
+        // CRUD BÁSICO
+        // ----------------------------------------------------
+
+        public async Task<IEnumerable<PlanoMentoria>> GetAllAsync()
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<PlanoMentoria?> GetByIdAsync(Guid id)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task AddAsync(PlanoMentoria entity)
@@ -34,72 +52,66 @@ namespace Mentorax.Api.Repositories.Implementations
 
         public async Task DeleteAsync(Guid id)
         {
-            var entity = await GetByIdAsync(id);
-            if (entity == null) return;
+            var existing = await _dbSet.FindAsync(id);
+            if (existing is null)
+                return;
 
-            _dbSet.Remove(entity);
+            _dbSet.Remove(existing);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PlanoMentoria?> GetByIdAsync(Guid id)
-        {
-            return await _dbSet
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == id);
-        }
-
-        public async Task<long> CountAsync()
-        {
-            return await _dbSet.LongCountAsync();
-        }
-
-        // ----------------------------------------------------------------------
-        // Implementações corretas exigidas pela interface
-        // ----------------------------------------------------------------------
+        // ----------------------------------------------------
+        // FILTROS POR MENTORADO (MENTEE)
+        // ----------------------------------------------------
 
         /// <summary>
-        /// Obtém planos por ID de mentorado (sem paginação)
+        /// Retorna todos os planos de mentoria de um determinado mentorado (mentee).
         /// </summary>
-        public async Task<IEnumerable<PlanoMentoria>> GetByMenteeIdAsync(Guid mentoradoId)
+        public async Task<IEnumerable<PlanoMentoria>> GetByMenteeIdAsync(Guid menteeId)
         {
             return await _dbSet
-                .Where(p => p.MentoradoId == mentoradoId)
+                .Where(p => p.MenteeId == menteeId)
+                .OrderBy(p => p.CreatedAt)
                 .AsNoTracking()
                 .ToListAsync();
         }
 
         /// <summary>
-        /// Paginação geral, compatível com a interface
+        /// Lista paginada de planos de mentoria.
         /// </summary>
-        public async Task<(IEnumerable<PlanoMentoria> Items, long TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
+        public async Task<(IEnumerable<PlanoMentoria> Items, long TotalCount)>
+            GetPagedAsync(int pageNumber, int pageSize)
         {
             var query = _dbSet.AsQueryable();
 
             var totalCount = await query.LongCountAsync();
 
             var items = await query
-                .OrderBy(p => p.Title)
+                .OrderByDescending(p => p.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .AsNoTracking()
                 .ToListAsync();
 
             return (items, totalCount);
         }
 
         /// <summary>
-        /// Paginação filtrando por mentoradoId
+        /// Lista paginada de planos filtrada por mentorado (mentee).
         /// </summary>
-        public async Task<(IEnumerable<PlanoMentoria> Items, long TotalCount)> GetPagedByMenteeIdAsync(Guid mentoradoId, int pageNumber, int pageSize)
+        public async Task<(IEnumerable<PlanoMentoria> Items, long TotalCount)>
+            GetPagedByMenteeIdAsync(Guid menteeId, int pageNumber, int pageSize)
         {
             var query = _dbSet
-                .Where(p => p.MentoradoId == mentoradoId);
+                .Where(p => p.MenteeId == menteeId);
 
             var totalCount = await query.LongCountAsync();
 
             var items = await query
-                .OrderBy(p => p.Title)
+                .OrderByDescending(p => p.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .AsNoTracking()
                 .ToListAsync();
 
             return (items, totalCount);

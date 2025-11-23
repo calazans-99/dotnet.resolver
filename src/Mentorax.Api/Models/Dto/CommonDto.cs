@@ -52,40 +52,6 @@ namespace Mentorax.Api.Models.Dto
     }
 
     /// <summary>
-    /// DTO para links HATEOAS
-    /// </summary>
-    public class LinkDto
-    {
-        /// <summary>
-        /// URL do link
-        /// </summary>
-        public string Href { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Relação do link (self, next, previous, etc.)
-        /// </summary>
-        public string Rel { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Método HTTP do link
-        /// </summary>
-        public string Method { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Descrição do link
-        /// </summary>
-        public string? Description { get; set; }
-
-        public LinkDto(string href, string rel, string method, string? description = null)
-        {
-            Href = href;
-            Rel = rel;
-            Method = method;
-            Description = description;
-        }
-    }
-
-    /// <summary>
     /// DTO para resposta de erro
     /// </summary>
     public class ErrorResponseDto

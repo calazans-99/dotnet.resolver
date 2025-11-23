@@ -3,13 +3,9 @@ using Mentorax.Api.Repositories.Interfaces;
 using Mentorax.Api.Models.Dto;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
-using Mentorax.Api.Repositories.Implementations;
 
 namespace Mentorax.Api.Controllers
 {
-    /// <summary>
-    /// Controller para gerenciamento de planos de mentoria.
-    /// </summary>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
@@ -30,43 +26,14 @@ namespace Mentorax.Api.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Lista todos os planos de mentoria com paginação.
-        /// </summary>
         [HttpGet]
-        [ProducesResponseType(typeof(Resource<object>), 200)]
-        [ProducesResponseType(400)]
-        public async Task<IActionResult> ObterTodos(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> ObterTodos()
         {
             try
             {
-                if (page < 1 || pageSize < 1 || pageSize > 100)
-                    return BadRequest("page deve ser >= 1 e pageSize deve estar entre 1 e 100");
-
-                var paged = await _repo.GetAllAsync(page, pageSize);
-
-                var dtos = _mapper.Map<IEnumerable<PlanoMentoriaDto>>(paged.Items);
-
-                var resource = new Resource<object>(new
-                {
-                    Items = dtos,
-                    paged.Page,
-                    paged.PageSize,
-                    paged.TotalCount
-                });
-
-                var self = Url.Action(nameof(ObterTodos), new { page, pageSize });
-                resource.Links.Add(new Link(self, "self", "GET"));
-
-                if (paged.Page < paged.TotalPages)
-                {
-                    var next = Url.Action(nameof(ObterTodos), new { page = paged.Page + 1, pageSize });
-                    resource.Links.Add(new Link(next, "next", "GET"));
-                }
-
-                return Ok(resource);
+                var entities = await _repo.GetAllAsync();
+                var dtos = _mapper.Map<IEnumerable<PlanoMentoriaDto>>(entities);
+                return Ok(dtos);
             }
             catch (Exception ex)
             {
@@ -75,12 +42,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtém um plano de mentoria pelo ID.
-        /// </summary>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(Resource<PlanoMentoriaDto>), 200)]
-        [ProducesResponseType(404)]
         public async Task<IActionResult> ObterPorId(Guid id)
         {
             try
@@ -90,11 +52,7 @@ namespace Mentorax.Api.Controllers
                     return NotFound($"Plano de mentoria com ID {id} não encontrado");
 
                 var dto = _mapper.Map<PlanoMentoriaDto>(entity);
-
-                var resource = new Resource<PlanoMentoriaDto>(dto);
-                resource.Links.Add(new Link(Url.Action(nameof(ObterPorId), new { id }), "self", "GET"));
-
-                return Ok(resource);
+                return Ok(dto);
             }
             catch (Exception ex)
             {
@@ -103,12 +61,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Cria um novo plano de mentoria.
-        /// </summary>
         [HttpPost]
-        [ProducesResponseType(typeof(PlanoMentoriaDto), 201)]
-        [ProducesResponseType(400)]
         public async Task<IActionResult> Criar([FromBody] PlanoMentoriaDto model)
         {
             try
@@ -117,7 +70,6 @@ namespace Mentorax.Api.Controllers
                     return BadRequest(ModelState);
 
                 var entity = _mapper.Map<Mentorax.Api.Models.PlanoMentoria>(model);
-
                 await _repo.AddAsync(entity);
 
                 var dto = _mapper.Map<PlanoMentoriaDto>(entity);
@@ -131,13 +83,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Atualiza um plano de mentoria existente.
-        /// </summary>
         [HttpPut("{id}")]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
         public async Task<IActionResult> Atualizar(Guid id, [FromBody] PlanoMentoriaDto model)
         {
             try
@@ -163,12 +109,7 @@ namespace Mentorax.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Exclui um plano de mentoria.
-        /// </summary>
         [HttpDelete("{id}")]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(404)]
         public async Task<IActionResult> Excluir(Guid id)
         {
             try
