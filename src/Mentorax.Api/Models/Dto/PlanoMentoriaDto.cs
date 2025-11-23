@@ -1,6 +1,4 @@
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Collections.Generic;
 
 namespace Mentorax.Api.Models.Dto
 {
